@@ -8,6 +8,21 @@
 #include "selfdrive/ui/sunnypilot/qt/offroad/settings/longitudinal_panel.h"
 
 LongitudinalPanel::LongitudinalPanel(QWidget *parent) : QWidget(parent) {
+  setStyleSheet(R"(
+    #back_btn {
+      font-size: 50px;
+      margin: 0px;
+      padding: 15px;
+      border-width: 0;
+      border-radius: 30px;
+      color: #dddddd;
+      background-color: #393939;
+    }
+    #back_btn:pressed {
+      background-color:  #4a4a4a;
+    }
+  )");
+
   main_layout = new QStackedLayout(this);
   ListWidget *list = new ListWidget(this, false);
 
@@ -69,7 +84,21 @@ LongitudinalPanel::LongitudinalPanel(QWidget *parent) : QWidget(parent) {
     "../assets/offroad/icon_shell.png");
   list->addItem(vibeFollowPersonalityControl);
 
+  speedLimitSettings = new PushButtonSP(tr("Speed Limit"), 750, this);
+  connect(speedLimitSettings, &QPushButton::clicked, [&]() {
+    cruisePanelScroller->setLastScrollPosition();
+    main_layout->setCurrentWidget(speedLimitScreen);
+  });
+  list->addItem(speedLimitSettings);
+
+  speedLimitScreen = new SpeedLimitSettings(this);
+  connect(speedLimitScreen, &SpeedLimitSettings::backPress, [=]() {
+    cruisePanelScroller->restoreScrollPosition();
+    main_layout->setCurrentWidget(cruisePanelScreen);
+  });
+
   main_layout->addWidget(cruisePanelScreen);
+  main_layout->addWidget(speedLimitScreen);
   main_layout->setCurrentWidget(cruisePanelScreen);
   refresh(offroad);
 }
@@ -140,7 +169,7 @@ void LongitudinalPanel::refresh(bool _offroad) {
   bool cai_allowed = (has_longitudinal_control && !is_pcm_cruise) || icbm_allowed;
   customAccIncrement->setEnabled(cai_allowed && !offroad);
   customAccIncrement->refresh();
-  
+
   SmartCruiseControlVision->setEnabled(has_longitudinal_control || icbm_allowed);
   // Vibe Personality controls - always enabled for toggling
   vibePersonalityControl->setEnabled(true);

@@ -15,6 +15,7 @@ from opendbc.car.interfaces import ACCEL_MIN
 from openpilot.selfdrive.car.cruise import V_CRUISE_UNSET
 from openpilot.sunnypilot.selfdrive.controls.lib.dec.dec import DynamicExperimentalController
 from openpilot.sunnypilot.selfdrive.controls.lib.smart_cruise_control.smart_cruise_control import SmartCruiseControl
+from openpilot.sunnypilot.selfdrive.controls.lib.speed_limit_assist.speed_limit_resolver import SpeedLimitResolver
 from openpilot.sunnypilot.models.helpers import get_active_bundle
 
 from openpilot.sunnypilot.selfdrive.controls.lib.vibe_personality.vibe_personality import VibePersonalityController
@@ -27,6 +28,7 @@ class LongitudinalPlannerSP:
     self.dec = DynamicExperimentalController(CP, mpc)
     self.vibe_controller = VibePersonalityController()
     self.scc = SmartCruiseControl()
+    self.resolver = SpeedLimitResolver()
     self.generation = int(model_bundle.generation) if (model_bundle := get_active_bundle()) else None
     self.source = Source.cruise
     self.transition_init()
@@ -44,6 +46,9 @@ class LongitudinalPlannerSP:
 
   def update_targets(self, sm: messaging.SubMaster, v_ego: float, a_ego: float, v_cruise: float) -> tuple[float, float]:
     self.scc.update(sm, v_ego, a_ego, v_cruise)
+
+    # Speed Limit Resolver
+    self.resolver.update(v_ego, sm)
 
     targets = {
       Source.cruise: (v_cruise, a_ego),
@@ -112,5 +117,13 @@ class LongitudinalPlannerSP:
     sccVision.maxPredictedLateralAccel = float(self.scc.vision.max_pred_lat_acc)
     sccVision.enabled = self.scc.vision.is_enabled
     sccVision.active = self.scc.vision.is_active
+
+    # Speed Limit
+    speedLimit = longitudinalPlanSP.speedLimit
+    resolver = speedLimit.resolver
+    resolver.speedLimit = float(self.resolver.speed_limit)
+    resolver.distToSpeedLimit = float(self.resolver.distance)
+    resolver.source = self.resolver.source
+    resolver.speedLimitOffset = float(self.resolver.speed_limit_offset)
 
     pm.send('longitudinalPlanSP', plan_sp_send)
