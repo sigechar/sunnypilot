@@ -26,7 +26,7 @@ class DRIVER_MONITOR_SETTINGS:
     # ref (page15-16): https://eur-lex.europa.eu/legal-content/EN/TXT/PDF/?uri=CELEX:42018X1947&rid=2
     self._AWARENESS_TIME = 99999. # passive wheeltouch total timeout
     self._AWARENESS_PRE_TIME_TILL_TERMINAL = 99999.
-    self._AWARENESS_PROMPT_TIME_TILL_TERMINAL = 6.
+    self._AWARENESS_PROMPT_TIME_TILL_TERMINAL = 99999.
     self._DISTRACTED_TIME = 99999. # active monitoring total timeout
     self._DISTRACTED_PRE_TIME_TILL_TERMINAL = 99999.
     self._DISTRACTED_PROMPT_TIME_TILL_TERMINAL = 99999.
